@@ -1,0 +1,79 @@
+{
+  "service": "payment-service",
+  "window_start": "2024-11-14T02:00:00Z",
+  "window_end": "2024-11-14T02:30:00Z",
+  "samples": [
+    {
+      "timestamp": "2024-11-14T02:00:00Z",
+      "cpu_percent": 22,
+      "mem_percent": 48,
+      "error_rate": 0.002,
+      "p99_latency_ms": 145,
+      "request_rate_rps": 120,
+      "restarts": 0
+    },
+    {
+      "timestamp": "2024-11-14T02:05:00Z",
+      "cpu_percent": 24,
+      "mem_percent": 50,
+      "error_rate": 0.003,
+      "p99_latency_ms": 152,
+      "request_rate_rps": 118,
+      "restarts": 0
+    },
+    {
+      "timestamp": "2024-11-14T02:10:00Z",
+      "cpu_percent": 28,
+      "mem_percent": 53,
+      "error_rate": 0.005,
+      "p99_latency_ms": 190,
+      "request_rate_rps": 115,
+      "restarts": 0
+    },
+    {
+      "timestamp": "2024-11-14T02:12:00Z",
+      "cpu_percent": 71,
+      "mem_percent": 68,
+      "error_rate": 0.42,
+      "p99_latency_ms": 3800,
+      "request_rate_rps": 90,
+      "restarts": 0
+    },
+    {
+      "timestamp": "2024-11-14T02:14:00Z",
+      "cpu_percent": 88,
+      "mem_percent": 74,
+      "error_rate": 0.79,
+      "p99_latency_ms": 8200,
+      "request_rate_rps": 40,
+      "restarts": 1
+    },
+    {
+      "timestamp": "2024-11-14T02:16:00Z",
+      "cpu_percent": 91,
+      "mem_percent": 76,
+      "error_rate": 0.81,
+      "p99_latency_ms": 9100,
+      "request_rate_rps": 22,
+      "restarts": 1
+    },
+    {
+      "timestamp": "2024-11-14T02:20:00Z",
+      "cpu_percent": 44,
+      "mem_percent": 60,
+      "error_rate": 0.31,
+      "p99_latency_ms": 2100,
+      "request_rate_rps": 65,
+      "restarts": 2
+    },
+    {
+      "timestamp": "2024-11-14T02:25:00Z",
+      "cpu_percent": 31,
+      "mem_percent": 55,
+      "error_rate": 0.18,
+      "p99_latency_ms": 980,
+      "request_rate_rps": 88,
+      "restarts": 2
+    }
+  ]
+}

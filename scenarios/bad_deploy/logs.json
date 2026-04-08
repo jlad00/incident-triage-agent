@@ -1,0 +1,106 @@
+[
+  {
+    "timestamp": "2024-11-14T02:10:02Z",
+    "service": "payment-service",
+    "level": "INFO",
+    "message": "Deployment v2.4.1 started. Previous version: v2.4.0",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-14T02:10:45Z",
+    "service": "payment-service",
+    "level": "INFO",
+    "message": "Health check passed. Service ready.",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-14T02:11:58Z",
+    "service": "payment-service",
+    "level": "WARN",
+    "message": "Slow database response detected: 1240ms (threshold: 500ms)",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:15Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "NullPointerException in PaymentProcessor.charge() at line 84",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:15Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "NullPointerException in PaymentProcessor.charge() at line 84",
+    "host": "pod-payment-7d9f-mn4r",
+    "trace_id": "trace-9034cd"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:18Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "Connection pool exhausted: db-primary:5432. Active connections: 50/50",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:22Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Upstream payment-service returned HTTP 500. Retrying (1/3)",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:25Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Upstream payment-service returned HTTP 500. Retrying (2/3)",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:12:28Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Max retries exceeded for payment-service. Returning 503 to client.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-8821ab"
+  },
+  {
+    "timestamp": "2024-11-14T02:13:05Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "NullPointerException in PaymentProcessor.charge() at line 84",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": "trace-1192ef"
+  },
+  {
+    "timestamp": "2024-11-14T02:13:10Z",
+    "service": "payment-service",
+    "level": "CRITICAL",
+    "message": "Circuit breaker OPEN: db-primary. Rejecting all database requests.",
+    "host": "pod-payment-7d9f-xk2p",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-14T02:14:00Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "Transaction rollback failed: connection already closed",
+    "host": "pod-payment-7d9f-mn4r",
+    "trace_id": "trace-2204gh"
+  },
+  {
+    "timestamp": "2024-11-14T02:15:30Z",
+    "service": "api-gateway",
+    "level": "WARN",
+    "message": "High error rate detected on route /api/v1/payments: 78% over last 60s",
+    "host": "pod-gateway-2c8a",
+    "trace_id": null
+  }
+]

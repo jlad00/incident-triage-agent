@@ -1,0 +1,56 @@
+version: "3.9"
+
+# -------------------------------------------------------
+# Incident Triage Agent — Local Development Stack
+#
+# Services:
+#   agent   — the triage agent API (FastAPI)
+#   ollama  — optional local LLM (comment out if using Anthropic API)
+#
+# Usage:
+#   docker compose up              # start everything
+#   docker compose up agent        # start only the agent (uses Anthropic API)
+#   docker compose run --rm agent python -m agent.main triage ./scenarios/bad_deploy
+# -------------------------------------------------------
+
+services:
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: triage-agent
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source for live reload during development
+      - .:/app
+      # Mount reports output directory
+      - ./reports:/app/reports
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - ollama
+    command: uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: triage-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    # Remove the deploy block if you're not on a machine with a GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_models:
+    driver: local

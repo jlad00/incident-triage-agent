@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": "2024-11-14T02:10:02Z",
+    "type": "deployment",
+    "service": "payment-service",
+    "version": "v2.4.1",
+    "previous_version": "v2.4.0",
+    "author": "ci-pipeline",
+    "environment": "production",
+    "change_summary": "Updated DB connection pool settings and payment processor retry logic",
+    "ticket": "PLAT-4421",
+    "rollback_available": true
+  }
+]
