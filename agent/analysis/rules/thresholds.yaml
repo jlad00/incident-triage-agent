@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Metric Threshold Rules
+#
+# The threshold evaluator checks each metric sample against these thresholds
+# and flags breaches with a severity level.
+#
+# Severity logic:
+#   critical  — immediate attention required, likely P1
+#   high      — significant degradation, likely P2
+#   medium    — concerning, worth investigating
+#   low       — informational, note in report
+#
+# All percentage values are 0–100.
+# Error rate is 0.0–1.0 (0.10 = 10%).
+# Latency in milliseconds.
+# ─────────────────────────────────────────────────────────────────────────────
+
+metrics:
+
+  cpu_percent:
+    description: "CPU utilization percentage"
+    thresholds:
+      - level: critical
+        operator: ">="
+        value: 95
+      - level: high
+        operator: ">="
+        value: 80
+      - level: medium
+        operator: ">="
+        value: 70
+      - level: low
+        operator: ">="
+        value: 60
+
+  mem_percent:
+    description: "Memory utilization percentage"
+    thresholds:
+      - level: critical
+        operator: ">="
+        value: 95
+      - level: high
+        operator: ">="
+        value: 85
+      - level: medium
+        operator: ">="
+        value: 75
+      - level: low
+        operator: ">="
+        value: 65
+
+  error_rate:
+    description: "Request error rate (0.0–1.0)"
+    thresholds:
+      - level: critical
+        operator: ">="
+        value: 0.50
+      - level: high
+        operator: ">="
+        value: 0.25
+      - level: medium
+        operator: ">="
+        value: 0.10
+      - level: low
+        operator: ">="
+        value: 0.05
+
+  p99_latency_ms:
+    description: "P99 request latency in milliseconds"
+    thresholds:
+      - level: critical
+        operator: ">="
+        value: 5000
+      - level: high
+        operator: ">="
+        value: 2000
+      - level: medium
+        operator: ">="
+        value: 1000
+      - level: low
+        operator: ">="
+        value: 500
+
+  restarts:
+    description: "Container or process restart count"
+    thresholds:
+      - level: critical
+        operator: ">="
+        value: 5
+      - level: high
+        operator: ">="
+        value: 2
+      - level: medium
+        operator: ">="
+        value: 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Severity scoring weights
+# Used by the correlator to compute an overall incident severity estimate.
+# Higher weight = more influence on the final P1/P2/P3 score.
+# ─────────────────────────────────────────────────────────────────────────────
+
+severity_weights:
+  critical: 10
+  high: 5
+  medium: 2
+  low: 1
+
+severity_score_thresholds:
+  P1: 15   # Score >= 15 → P1
+  P2: 6    # Score >= 6  → P2
+  P3: 1    # Score >= 1  → P3

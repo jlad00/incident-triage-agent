@@ -1,0 +1,88 @@
+# ── Credentials & Environment ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Testing & Coverage ─────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.coveragerc
+
+# ── Linting ────────────────────────────────────────────────────────────────
+.ruff_cache/
+.mypy_cache/
+
+# ── Agent Outputs ──────────────────────────────────────────────────────────
+# Generated incident reports — don't commit these
+reports/
+*.report.json
+*.report.md
+
+# ── Docker ─────────────────────────────────────────────────────────────────
+# Keep docker-compose.yml but ignore override files with local secrets
+docker-compose.override.yml
+
+# ── IDEs ───────────────────────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.iml
+
+# ── OS ─────────────────────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS (in case you ever work from one)
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Logs ───────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Jupyter (if you ever explore data in notebooks) ────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Ollama model cache (large binary files) ────────────────────────────────
+ollama_data/
+
+# ── Misc ───────────────────────────────────────────────────────────────────
+*.bak
+*.swp
+*.tmp
+.cache/

@@ -1,0 +1,175 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Error Pattern Rules
+#
+# Each pattern is matched against log entry messages using regex.
+# When matched, the log entry is tagged with the pattern name and severity.
+#
+# Fields:
+#   name        — unique identifier, used in evidence citations
+#   severity    — high / medium / low
+#   category    — groups related patterns for hypothesis generation
+#   regex       — Python regex (case-insensitive by default)
+#   description — human-readable label for reports
+#   services    — optional list; if set, only match these services
+#               — omit or set to [] to match any service
+# ─────────────────────────────────────────────────────────────────────────────
+
+patterns:
+
+  # ── Memory ────────────────────────────────────────────────────────────────
+  - name: oom_kill
+    severity: high
+    category: memory
+    regex: "out of memory|oom.?kill|killed process|memory limit exceeded"
+    description: "OOM kill detected"
+
+  - name: memory_pressure
+    severity: medium
+    category: memory
+    regex: "memory pressure|low memory|swap (usage|pressure|exhausted)"
+    description: "Memory pressure signal"
+
+  # ── Application Errors ────────────────────────────────────────────────────
+  - name: null_pointer_exception
+    severity: high
+    category: application_error
+    regex: "nullpointerexception|null pointer|nil pointer dereference"
+    description: "Null pointer / nil dereference exception"
+
+  - name: unhandled_exception
+    severity: high
+    category: application_error
+    regex: "unhandled exception|uncaught exception|panic:|fatal error"
+    description: "Unhandled exception or panic"
+
+  - name: stack_overflow
+    severity: high
+    category: application_error
+    regex: "stack overflow|stackoverflow|maximum recursion"
+    description: "Stack overflow detected"
+
+  # ── Database / Storage ────────────────────────────────────────────────────
+  - name: connection_pool_exhausted
+    severity: high
+    category: database
+    regex: "connection pool exhausted|no connections available|pool timeout|too many connections"
+    description: "Database connection pool exhausted"
+
+  - name: db_connection_refused
+    severity: high
+    category: database
+    regex: "connection refused.*:(5432|3306|1433|27017|6379)|ECONNREFUSED.*db"
+    description: "Database connection refused"
+
+  - name: db_connection_error
+    severity: medium
+    category: database
+    regex: "connection (refused|reset|closed|timed? ?out)|could not connect to (server|database|host)"
+    description: "Database connection error"
+
+  - name: slow_query
+    severity: low
+    category: database
+    regex: "slow (query|database response|db response)|query took [0-9]+ms|long.?running query"
+    description: "Slow database query or response"
+
+  - name: deadlock
+    severity: high
+    category: database
+    regex: "deadlock|lock timeout|lock wait timeout exceeded"
+    description: "Database deadlock detected"
+
+  # ── Reliability Patterns ──────────────────────────────────────────────────
+  - name: circuit_breaker_open
+    severity: high
+    category: reliability
+    regex: "circuit breaker (open|tripped|triggered)|circuit.?open"
+    description: "Circuit breaker opened"
+
+  - name: service_restart
+    severity: medium
+    category: reliability
+    regex: "restarting|container.*restart|process.*restart|service.*restart|starting up"
+    description: "Service or container restart"
+
+  - name: health_check_failure
+    severity: medium
+    category: reliability
+    regex: "health.?check (fail|timeout|error)|readiness probe fail|liveness probe fail"
+    description: "Health check failure"
+
+  # ── Upstream / Network ────────────────────────────────────────────────────
+  - name: upstream_http_5xx
+    severity: high
+    category: upstream
+    regex: "HTTP (500|502|503|504)|upstream.*returned.*(500|502|503|504)|status.?code.?(500|502|503|504)"
+    description: "Upstream service returned 5xx error"
+
+  - name: max_retries_exceeded
+    severity: high
+    category: upstream
+    regex: "max retries exceeded|retry limit|exhausted retries|giving up after"
+    description: "Max retries exceeded for upstream call"
+
+  - name: timeout
+    severity: medium
+    category: upstream
+    regex: "timed? ?out|deadline exceeded|context deadline|request timeout|read timeout|write timeout"
+    description: "Request or operation timeout"
+
+  - name: dns_failure
+    severity: medium
+    category: network
+    regex: "dns (resolution|lookup) (fail|error|timeout)|no such host|name resolution"
+    description: "DNS resolution failure"
+
+  # ── Auth / Security ───────────────────────────────────────────────────────
+  - name: auth_failure
+    severity: medium
+    category: auth
+    regex: "401 unauthorized|403 forbidden|authentication fail|authorization fail|invalid (token|credentials|api.?key)"
+    description: "Authentication or authorization failure"
+
+  - name: tls_error
+    severity: high
+    category: auth
+    regex: "tls (handshake|error|fail)|ssl (error|fail|handshake)|certificate (expired|invalid|error|verify fail)"
+    description: "TLS/SSL error or certificate issue"
+
+  - name: cert_expiry
+    severity: high
+    category: auth
+    regex: "certificate (expired|expir|will expire)|cert.*expir|x509.*expir"
+    description: "Certificate expiry detected"
+
+  # ── Deployment ────────────────────────────────────────────────────────────
+  - name: deployment_event
+    severity: low
+    category: deployment
+    regex: "deployment (started|complete|failed)|deploying version|rolling update|new version"
+    description: "Deployment or rollout event"
+
+  - name: rollback_event
+    severity: medium
+    category: deployment
+    regex: "rollback|rolling back|reverted to"
+    description: "Rollback event detected"
+
+  # ── Resource Contention ───────────────────────────────────────────────────
+  - name: disk_pressure
+    severity: medium
+    category: resource
+    regex: "disk (full|pressure|space|quota)|no space left|inode (exhausted|limit)"
+    description: "Disk pressure or space exhaustion"
+
+  - name: rate_limited
+    severity: medium
+    category: resource
+    regex: "rate limit(ed)?|too many requests|429|throttl(ed|ing)"
+    description: "Rate limiting or throttling detected"
+
+  - name: high_error_rate
+    severity: high
+    category: resource
+    regex: "high error rate|error rate.*[5-9][0-9]%|[5-9][0-9]% error"
+    description: "High error rate reported in logs"

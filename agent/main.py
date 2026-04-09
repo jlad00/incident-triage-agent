@@ -29,6 +29,12 @@ from agent.ingestion.metrics_parser import MetricsParser
 from agent.ingestion.change_event_parser import ChangeEventParser
 from agent.ingestion.runbook_loader import RunbookLoader
 
+import yaml
+from agent.analysis.signal_extractor import SignalExtractor
+from agent.analysis.threshold_evaluator import ThresholdEvaluator
+from agent.analysis.correlator import Correlator
+from agent.evidence.packet_builder import EvidencePacketBuilder
+
 app = typer.Typer(
     name="triage-agent",
     help="Incident Triage & Root Cause Agent",
@@ -135,9 +141,54 @@ def triage(
         return
 
     # ── Summary footer ───────────────────────────────────────────────────────
+    # ── Analysis ─────────────────────────────────────────────────────────────
+    console.print("\n[bold]→ Extracting signals...[/bold]")
+    if "logs" in results:
+        signal_result = SignalExtractor().extract(results["logs"])
+        results["signals"] = signal_result
+        _print_signals(signal_result)
+    
+    if "metrics" in results:
+        console.print("\n[bold]→ Evaluating thresholds...[/bold]")
+        threshold_result = ThresholdEvaluator().evaluate(results["metrics"])
+        results["thresholds"] = threshold_result
+        _print_breaches(threshold_result)
+
+    if "signals" in results and "changes" in results:
+        console.print("\n[bold]→ Correlating change events...[/bold]")
+        correlator = Correlator()
+        correlation_result = correlator.correlate(
+            results["changes"],
+            results["signals"],
+            results.get("thresholds"),
+        )
+        results["correlation"] = correlation_result
+        _print_correlation(correlation_result)
+
+    # ── Evidence Packet ───────────────────────────────────────────────────────
+    if "signals" in results:
+        packet = EvidencePacketBuilder().build(
+            scenario_name=scenario_dir.name,
+            parsed_logs=results["logs"],
+            parsed_metrics=results.get("metrics"),
+            parsed_changes=results.get("changes", ChangeEventParser().parse_from_list([])),
+            signal_result=results["signals"],
+            threshold_result=results.get("thresholds"),
+            correlation_result=results.get("correlation"),
+            runbook_context=results.get("runbook"),
+        )
+        results["packet"] = packet
+
+    if output_json and "packet" in results:
+        print(json.dumps(results["packet"].model_dump(mode="json"), indent=2, default=str))
+        return
+
     console.print(Panel.fit(
-        "[green]✔ Ingestion complete[/green]\n"
-        "[dim]Next: Sprint 2 will add signal extraction and threshold evaluation[/dim]",
+        f"[green]✔ Analysis complete[/green]  "
+        f"[yellow]{results.get('correlation', None) and results['correlation'].severity_estimate or '—'}[/yellow] severity\n"
+        f"[dim]Signals: {len(results.get('signals', type('', (), {'signals': []})()).signals) if 'signals' in results else 0} | "
+        f"Breaches: {len(results.get('thresholds', type('', (), {'breaches': []})()).breaches) if 'thresholds' in results else 0} | "
+        f"Next: Sprint 3 adds LLM reasoning[/dim]",
         border_style="green"
     ))
 
@@ -230,7 +281,75 @@ def _print_changes_summary(parsed):
     console.print(table)
     console.print(f"[dim]  {parsed.parsed_events} events parsed[/dim]")
 
+def _print_signals(result):
+    sev_colors = {"high": "red", "medium": "yellow", "low": "dim"}
+    table = Table(show_header=True, header_style="bold magenta", box=None)
+    table.add_column("Severity", width=10)
+    table.add_column("Signal", width=30)
+    table.add_column("Category", width=18)
+    table.add_column("Count", width=7)
+    table.add_column("Services")
 
+    for s in result.signals:
+        color = sev_colors.get(s.severity, "white")
+        table.add_row(
+            f"[{color}]{s.severity.upper()}[/{color}]",
+            s.name,
+            s.category,
+            str(s.count),
+            ", ".join(s.services_affected),
+        )
+    console.print(table)
+    if result.unmatched_error_count:
+        console.print(f"[yellow]  ⚠ {result.unmatched_error_count} ERROR/CRITICAL entries matched no pattern[/yellow]")
+
+
+def _print_breaches(result):
+    sev_colors = {"critical": "bold red", "high": "red", "medium": "yellow", "low": "dim"}
+    table = Table(show_header=True, header_style="bold magenta", box=None)
+    table.add_column("Severity", width=10)
+    table.add_column("Metric", width=22)
+    table.add_column("Peak Value", width=12)
+    table.add_column("Threshold", width=12)
+    table.add_column("Breach Start")
+
+    for b in result.breaches:
+        color = sev_colors.get(b.severity, "white")
+        table.add_row(
+            f"[{color}]{b.severity.upper()}[/{color}]",
+            b.metric,
+            str(b.peak_value),
+            f"{b.operator} {b.threshold_value}",
+            b.breach_start.strftime("%H:%M:%S") if b.breach_start else "—",
+        )
+    if not result.breaches:
+        console.print("[dim]  No threshold breaches detected[/dim]")
+    else:
+        console.print(table)
+
+
+def _print_correlation(result):
+    if not result.correlated_changes:
+        console.print("[dim]  No change events correlated with incident window[/dim]")
+        return
+
+    for c in result.correlated_changes:
+        strength_color = {"high": "red", "medium": "yellow", "low": "dim"}.get(c.strength, "white")
+        console.print(
+            f"  [{strength_color}]{c.strength.upper()} correlation[/{strength_color}]"
+            f" — {c.change_event.type} to [cyan]{c.change_event.service}[/cyan]"
+            f" ({c.change_event.version or 'unknown version'})"
+            f" → first signal [yellow]{c.delta_human}[/yellow] later"
+        )
+        console.print(f"  [dim]{c.strength_reasoning}[/dim]")
+
+    console.print(
+        f"\n  Severity estimate: [bold {'red' if result.severity_estimate == 'P1' else 'yellow'}]"
+        f"{result.severity_estimate}[/bold {'red' if result.severity_estimate == 'P1' else 'yellow'}]"
+        f"  (score: {result.severity_score})"
+    )
+    console.print(f"  [dim]{result.severity_reasoning}[/dim]")
+    
 # ── Module entry ──────────────────────────────────────────────────────────────
 
 def main():
