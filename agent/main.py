@@ -1,44 +1,36 @@
 """
-Incident Triage Agent — CLI entrypoint (Sprint 1)
+Incident Triage Agent — CLI entrypoint
 
 Usage:
     python -m agent.main scenarios/bad_deploy
+    python -m agent.main scenarios/bad_deploy --no-llm
     python -m agent.main scenarios/bad_deploy --json
-
-Sprint 1: loads and parses all inputs, prints normalized output.
-Sprint 2: adds signal extraction.
-Sprint 3: adds LLM reasoning.
-Sprint 4: adds reports + API.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
+from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich import print as rprint
 
-from agent.ingestion.log_parser import LogParser
-from agent.ingestion.metrics_parser import MetricsParser
-from agent.ingestion.change_event_parser import ChangeEventParser
-from agent.ingestion.runbook_loader import RunbookLoader
-
-import yaml
+from agent.analysis.correlator import Correlator
 from agent.analysis.signal_extractor import SignalExtractor
 from agent.analysis.threshold_evaluator import ThresholdEvaluator
-from agent.analysis.correlator import Correlator
 from agent.evidence.packet_builder import EvidencePacketBuilder
-
-from dotenv import load_dotenv
+from agent.ingestion.change_event_parser import ChangeEventParser
+from agent.ingestion.log_parser import LogParser
+from agent.ingestion.metrics_parser import MetricsParser
+from agent.ingestion.runbook_loader import RunbookLoader
 from agent.llm.client import LLMClient, LLMError
 from agent.llm.prompt_builder import PromptBuilder
-from agent.llm.response_parser import ResponseParser, ParseError
+from agent.llm.response_parser import ParseError, ResponseParser
 from agent.reporting.json_reporter import JSONReporter
 from agent.reporting.markdown_reporter import MarkdownReporter
 
@@ -63,26 +55,24 @@ def triage(
         ..., help="Path to scenario directory containing logs.json, metrics.json, changes.json"
     ),
     output_json: bool = typer.Option(
-        False, "--json", help="Output parsed data as raw JSON"
+        False, "--json", help="Output evidence packet as raw JSON (skips LLM)"
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show debug logging"
     ),
     no_llm: bool = typer.Option(
-        False, "--no-llm", help="Skip LLM call, output evidence packet only"
+        False, "--no-llm", help="Skip LLM call, output deterministic analysis only"
     ),
     output_dir: Path = typer.Option(
         Path("reports"), "--output-dir", help="Directory to write reports"
     ),
 ):
-    """
-    Load and parse an incident scenario directory.
-    Prints normalized ingestion output.
-    """
+    """Load, analyze, and triage an incident scenario directory."""
+
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    # ── Validate scenario directory ──────────────────────────────────────────
+    # ── Validate ──────────────────────────────────────────────────────────────
     if not scenario_dir.exists() or not scenario_dir.is_dir():
         console.print(f"[red]Error:[/red] Scenario directory not found: {scenario_dir}")
         raise typer.Exit(1)
@@ -93,10 +83,9 @@ def triage(
         border_style="cyan"
     ))
 
-    # ── Parse inputs ─────────────────────────────────────────────────────────
     results = {}
 
-    # Logs
+    # ── Ingestion ─────────────────────────────────────────────────────────────
     log_file = scenario_dir / "logs.json"
     if log_file.exists():
         console.print("\n[bold]→ Parsing logs...[/bold]")
@@ -109,7 +98,6 @@ def triage(
     else:
         console.print("[dim]No logs.json found — skipping[/dim]")
 
-    # Metrics
     metrics_file = scenario_dir / "metrics.json"
     if metrics_file.exists():
         console.print("\n[bold]→ Parsing metrics...[/bold]")
@@ -122,7 +110,6 @@ def triage(
     else:
         console.print("[dim]No metrics.json found — skipping[/dim]")
 
-    # Change events
     changes_file = scenario_dir / "changes.json"
     if changes_file.exists():
         console.print("\n[bold]→ Parsing change events...[/bold]")
@@ -135,82 +122,58 @@ def triage(
     else:
         console.print("[dim]No changes.json found — skipping[/dim]")
 
-    # Runbook
     runbook_text = RunbookLoader().load_from_scenario_dir(scenario_dir)
     if runbook_text:
         console.print(f"\n[bold]→ Runbook loaded[/bold] [dim]({len(runbook_text)} chars)[/dim]")
         results["runbook"] = runbook_text
 
-    # ── JSON output mode ─────────────────────────────────────────────────────
-    if output_json:
-        output = {}
-        if "logs" in results:
-            output["logs"] = results["logs"].model_dump(mode="json")
-        if "metrics" in results:
-            output["metrics"] = results["metrics"].model_dump(mode="json")
-        if "changes" in results:
-            output["changes"] = results["changes"].model_dump(mode="json")
-        if "runbook" in results:
-            output["runbook"] = results["runbook"]
-        print(json.dumps(output, indent=2, default=str))
-        return
+    if "logs" not in results:
+        console.print("[red]No logs found — cannot continue.[/red]")
+        raise typer.Exit(1)
 
-    # ── Summary footer ───────────────────────────────────────────────────────
-    # ── Analysis ─────────────────────────────────────────────────────────────
+    # ── Deterministic Analysis ────────────────────────────────────────────────
     console.print("\n[bold]→ Extracting signals...[/bold]")
-    if "logs" in results:
-        signal_result = SignalExtractor().extract(results["logs"])
-        results["signals"] = signal_result
-        _print_signals(signal_result)
-    
+    signal_result = SignalExtractor().extract(results["logs"])
+    results["signals"] = signal_result
+    _print_signals(signal_result)
+
     if "metrics" in results:
         console.print("\n[bold]→ Evaluating thresholds...[/bold]")
         threshold_result = ThresholdEvaluator().evaluate(results["metrics"])
         results["thresholds"] = threshold_result
         _print_breaches(threshold_result)
 
-    if "signals" in results and "changes" in results:
-        console.print("\n[bold]→ Correlating change events...[/bold]")
-        correlator = Correlator()
-        correlation_result = correlator.correlate(
-            results["changes"],
-            results["signals"],
-            results.get("thresholds"),
-        )
-        results["correlation"] = correlation_result
-        _print_correlation(correlation_result)
+    parsed_changes = results.get("changes", ChangeEventParser().parse_from_list([]))
+    console.print("\n[bold]→ Correlating change events...[/bold]")
+    correlation_result = Correlator().correlate(
+        parsed_changes,
+        results["signals"],
+        results.get("thresholds"),
+    )
+    results["correlation"] = correlation_result
+    _print_correlation(correlation_result)
 
     # ── Evidence Packet ───────────────────────────────────────────────────────
-    if "signals" in results:
-        packet = EvidencePacketBuilder().build(
-            scenario_name=scenario_dir.name,
-            parsed_logs=results["logs"],
-            parsed_metrics=results.get("metrics"),
-            parsed_changes=results.get("changes", ChangeEventParser().parse_from_list([])),
-            signal_result=results["signals"],
-            threshold_result=results.get("thresholds"),
-            correlation_result=results.get("correlation"),
-            runbook_context=results.get("runbook"),
-        )
-        results["packet"] = packet
+    packet = EvidencePacketBuilder().build(
+        scenario_name=scenario_dir.name,
+        parsed_logs=results["logs"],
+        parsed_metrics=results.get("metrics"),
+        parsed_changes=parsed_changes,
+        signal_result=results["signals"],
+        threshold_result=results.get("thresholds"),
+        correlation_result=correlation_result,
+        runbook_context=results.get("runbook"),
+    )
+    results["packet"] = packet
 
-    if output_json and "packet" in results:
-        print(json.dumps(results["packet"].model_dump(mode="json"), indent=2, default=str))
+    # ── JSON mode — print packet and exit (no LLM) ────────────────────────────
+    if output_json:
+        print(json.dumps(packet.model_dump(mode="json"), indent=2, default=str))
         return
 
-    console.print(Panel.fit(
-        f"[green]✔ Analysis complete[/green]  "
-        f"[yellow]{results.get('correlation', None) and results['correlation'].severity_estimate or '—'}[/yellow] severity\n"
-        f"[dim]Signals: {len(results.get('signals', type('', (), {'signals': []})()).signals) if 'signals' in results else 0} | "
-        f"Breaches: {len(results.get('thresholds', type('', (), {'breaches': []})()).breaches) if 'thresholds' in results else 0} | "
-        f"Next: Sprint 3 adds LLM reasoning[/dim]",
-        border_style="green"
-    
-    ))
-    # ── LLM Reasoning ────────────────────────────────────────────────────────
-    if "packet" not in results or no_llm:
-        if no_llm:
-            console.print("[dim]→ LLM skipped (--no-llm flag set)[/dim]")
+    # ── No-LLM mode ───────────────────────────────────────────────────────────
+    if no_llm:
+        console.print("\n[dim]→ LLM skipped (--no-llm flag)[/dim]")
         console.print(Panel.fit(
             "[green]✔ Deterministic analysis complete[/green]\n"
             "[dim]Run without --no-llm to add LLM reasoning[/dim]",
@@ -218,9 +181,8 @@ def triage(
         ))
         return
 
-    packet = results["packet"]
+    # ── LLM Reasoning ─────────────────────────────────────────────────────────
     console.print("\n[bold]→ Running LLM reasoning...[/bold]")
-
     try:
         llm_client = LLMClient.from_env()
         system_prompt, user_prompt = PromptBuilder().build(packet)
@@ -236,10 +198,8 @@ def triage(
             llm_provider=provider_name,
         )
 
-        # ── Print report to console ───────────────────────────────────────
         _print_triage_report(report)
 
-        # ── Write reports ─────────────────────────────────────────────────
         json_path = JSONReporter(output_dir).write(packet, report)
         md_path = MarkdownReporter(output_dir).write(packet, report)
         console.print(f"\n[dim]Reports written:[/dim]")
@@ -253,10 +213,10 @@ def triage(
     except ParseError as e:
         console.print(f"\n[red]LLM response parse error:[/red] {e}")
         if verbose:
-            console.print(f"[dim]Raw response:\n{e.raw_response[:500]}[/dim]")
+            console.print(f"[dim]Raw response:\n{e.raw_response[:800]}[/dim]")
         raise typer.Exit(1)
 
-    sev_color = "red" if report.severity == "P1" else "yellow" if report.severity == "P2" else "green"
+    sev_color = "bold red" if report.severity == "P1" else "red" if report.severity == "P2" else "yellow"
     console.print(Panel.fit(
         f"[green]✔ Triage complete[/green]  "
         f"[{sev_color}]{report.severity}[/{sev_color}]  "
@@ -265,7 +225,8 @@ def triage(
         border_style="green"
     ))
 
-# ── Print helpers ─────────────────────────────────────────────────────────────
+
+# ── Print helpers — Ingestion ─────────────────────────────────────────────────
 
 def _print_log_summary(parsed):
     table = Table(show_header=True, header_style="bold magenta", box=None)
@@ -275,13 +236,9 @@ def _print_log_summary(parsed):
     table.add_column("Message")
 
     level_colors = {
-        "DEBUG": "dim",
-        "INFO": "green",
-        "WARN": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold red",
+        "DEBUG": "dim", "INFO": "green", "WARN": "yellow",
+        "ERROR": "red", "CRITICAL": "bold red",
     }
-
     for entry in parsed.entries:
         color = level_colors.get(entry.level, "white")
         table.add_row(
@@ -290,7 +247,6 @@ def _print_log_summary(parsed):
             f"[{color}]{entry.level}[/{color}]",
             entry.message[:80] + ("..." if len(entry.message) > 80 else ""),
         )
-
     console.print(table)
     console.print(
         f"[dim]  {parsed.parsed_entries}/{parsed.total_entries} entries parsed"
@@ -322,7 +278,6 @@ def _print_metrics_summary(parsed):
             str(s.p99_latency_ms or "—"),
             str(s.restarts or "—"),
         )
-
     console.print(table)
     console.print(
         f"[dim]  Service: {parsed.service} | "
@@ -349,9 +304,11 @@ def _print_changes_summary(parsed):
             event.author or "—",
             (event.change_summary or "")[:60],
         )
-
     console.print(table)
     console.print(f"[dim]  {parsed.parsed_events} events parsed[/dim]")
+
+
+# ── Print helpers — Analysis ──────────────────────────────────────────────────
 
 def _print_signals(result):
     sev_colors = {"high": "red", "medium": "yellow", "low": "dim"}
@@ -415,18 +372,21 @@ def _print_correlation(result):
         )
         console.print(f"  [dim]{c.strength_reasoning}[/dim]")
 
+    sev_color = "bold red" if result.severity_estimate == "P1" else "yellow"
     console.print(
-        f"\n  Severity estimate: [bold {'red' if result.severity_estimate == 'P1' else 'yellow'}]"
-        f"{result.severity_estimate}[/bold {'red' if result.severity_estimate == 'P1' else 'yellow'}]"
+        f"\n  Severity estimate: [{sev_color}]{result.severity_estimate}[/{sev_color}]"
         f"  (score: {result.severity_score})"
     )
     console.print(f"  [dim]{result.severity_reasoning}[/dim]")
+
+
+# ── Print helpers — Triage Report ─────────────────────────────────────────────
 
 def _print_triage_report(report):
     conf_colors = {"high": "red", "medium": "yellow", "low": "dim"}
     sev_color = {"P1": "bold red", "P2": "red", "P3": "yellow", "P4": "green"}.get(report.severity, "white")
 
-    console.print(f"\n[bold]TRIAGE REPORT[/bold]")
+    console.print("\n[bold]TRIAGE REPORT[/bold]")
     console.print(Panel(report.summary, title="Summary", border_style="cyan"))
 
     console.print("\n[bold magenta]Root Cause Hypotheses[/bold magenta]")
@@ -454,8 +414,9 @@ def _print_triage_report(report):
         f"  [dim](LLM {'agrees' if report.severity_assessment.agrees_with_computed else 'disagrees'} with computed estimate)[/dim]"
     )
     console.print(f"[dim]{report.confidence_note}[/dim]")
-    
-# ── Module entry ──────────────────────────────────────────────────────────────
+
+
+# ── Entry ─────────────────────────────────────────────────────────────────────
 
 def main():
     app()

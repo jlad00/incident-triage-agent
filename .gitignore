@@ -86,3 +86,7 @@ ollama_data/
 *.swp
 *.tmp
 .cache/
+
+# Keep the reports folder but ignore generated files
+reports/*
+!reports/.gitkeep
