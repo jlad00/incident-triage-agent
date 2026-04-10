@@ -35,6 +35,15 @@ from agent.analysis.threshold_evaluator import ThresholdEvaluator
 from agent.analysis.correlator import Correlator
 from agent.evidence.packet_builder import EvidencePacketBuilder
 
+from dotenv import load_dotenv
+from agent.llm.client import LLMClient, LLMError
+from agent.llm.prompt_builder import PromptBuilder
+from agent.llm.response_parser import ResponseParser, ParseError
+from agent.reporting.json_reporter import JSONReporter
+from agent.reporting.markdown_reporter import MarkdownReporter
+
+load_dotenv()
+
 app = typer.Typer(
     name="triage-agent",
     help="Incident Triage & Root Cause Agent",
@@ -58,6 +67,12 @@ def triage(
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show debug logging"
+    ),
+    no_llm: bool = typer.Option(
+        False, "--no-llm", help="Skip LLM call, output evidence packet only"
+    ),
+    output_dir: Path = typer.Option(
+        Path("reports"), "--output-dir", help="Directory to write reports"
     ),
 ):
     """
@@ -190,8 +205,65 @@ def triage(
         f"Breaches: {len(results.get('thresholds', type('', (), {'breaches': []})()).breaches) if 'thresholds' in results else 0} | "
         f"Next: Sprint 3 adds LLM reasoning[/dim]",
         border_style="green"
+    
     ))
+    # ── LLM Reasoning ────────────────────────────────────────────────────────
+    if "packet" not in results or no_llm:
+        if no_llm:
+            console.print("[dim]→ LLM skipped (--no-llm flag set)[/dim]")
+        console.print(Panel.fit(
+            "[green]✔ Deterministic analysis complete[/green]\n"
+            "[dim]Run without --no-llm to add LLM reasoning[/dim]",
+            border_style="green"
+        ))
+        return
 
+    packet = results["packet"]
+    console.print("\n[bold]→ Running LLM reasoning...[/bold]")
+
+    try:
+        llm_client = LLMClient.from_env()
+        system_prompt, user_prompt = PromptBuilder().build(packet)
+
+        with console.status("[dim]Waiting for LLM response...[/dim]"):
+            raw_response = llm_client.complete(system_prompt, user_prompt)
+
+        provider_name = type(llm_client).__name__.replace("Client", "").lower()
+        report = ResponseParser().parse(
+            raw_response,
+            incident_id=packet.incident_id,
+            scenario_name=packet.scenario_name,
+            llm_provider=provider_name,
+        )
+
+        # ── Print report to console ───────────────────────────────────────
+        _print_triage_report(report)
+
+        # ── Write reports ─────────────────────────────────────────────────
+        json_path = JSONReporter(output_dir).write(packet, report)
+        md_path = MarkdownReporter(output_dir).write(packet, report)
+        console.print(f"\n[dim]Reports written:[/dim]")
+        console.print(f"  [cyan]{json_path}[/cyan]")
+        console.print(f"  [cyan]{md_path}[/cyan]")
+
+    except LLMError as e:
+        console.print(f"\n[red]LLM error:[/red] {e}")
+        console.print("[dim]Tip: Check your .env file. Use --no-llm to run deterministic analysis only.[/dim]")
+        raise typer.Exit(1)
+    except ParseError as e:
+        console.print(f"\n[red]LLM response parse error:[/red] {e}")
+        if verbose:
+            console.print(f"[dim]Raw response:\n{e.raw_response[:500]}[/dim]")
+        raise typer.Exit(1)
+
+    sev_color = "red" if report.severity == "P1" else "yellow" if report.severity == "P2" else "green"
+    console.print(Panel.fit(
+        f"[green]✔ Triage complete[/green]  "
+        f"[{sev_color}]{report.severity}[/{sev_color}]  "
+        f"[dim]{len(report.hypotheses)} hypothesis/es | "
+        f"{len(report.next_steps)} next steps[/dim]",
+        border_style="green"
+    ))
 
 # ── Print helpers ─────────────────────────────────────────────────────────────
 
@@ -349,6 +421,39 @@ def _print_correlation(result):
         f"  (score: {result.severity_score})"
     )
     console.print(f"  [dim]{result.severity_reasoning}[/dim]")
+
+def _print_triage_report(report):
+    conf_colors = {"high": "red", "medium": "yellow", "low": "dim"}
+    sev_color = {"P1": "bold red", "P2": "red", "P3": "yellow", "P4": "green"}.get(report.severity, "white")
+
+    console.print(f"\n[bold]TRIAGE REPORT[/bold]")
+    console.print(Panel(report.summary, title="Summary", border_style="cyan"))
+
+    console.print("\n[bold magenta]Root Cause Hypotheses[/bold magenta]")
+    for h in report.hypotheses:
+        color = conf_colors.get(h.confidence, "white")
+        console.print(f"  [{color}]{h.rank}. [{h.confidence.upper()}][/{color}] {h.hypothesis}")
+        console.print(f"     [dim]{h.reasoning}[/dim]")
+        for ev in h.evidence:
+            console.print(f"     • {ev}")
+        console.print()
+
+    console.print("[bold magenta]Next Steps[/bold magenta]")
+    for s in report.next_steps:
+        console.print(f"  [cyan]{s.priority}.[/cyan] {s.action}")
+        console.print(f"     [dim]{s.rationale}[/dim]")
+
+    if report.remediation_suggestions:
+        console.print("\n[bold magenta]Remediation[/bold magenta]")
+        for r in report.remediation_suggestions:
+            console.print(f"  • {r.action}")
+            console.print(f"    [dim]{r.condition}[/dim]")
+
+    console.print(
+        f"\n[bold magenta]Severity:[/bold magenta] [{sev_color}]{report.severity}[/{sev_color}]"
+        f"  [dim](LLM {'agrees' if report.severity_assessment.agrees_with_computed else 'disagrees'} with computed estimate)[/dim]"
+    )
+    console.print(f"[dim]{report.confidence_note}[/dim]")
     
 # ── Module entry ──────────────────────────────────────────────────────────────
 
