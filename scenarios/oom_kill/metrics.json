@@ -1,0 +1,14 @@
+{
+  "service": "ml-inference",
+  "window_start": "2024-11-15T03:15:00Z",
+  "window_end": "2024-11-15T03:35:00Z",
+  "samples": [
+    {"timestamp": "2024-11-15T03:15:00Z", "cpu_percent": 55, "mem_percent": 61, "error_rate": 0.001, "p99_latency_ms": 340, "request_rate_rps": 45, "restarts": 0},
+    {"timestamp": "2024-11-15T03:18:00Z", "cpu_percent": 58, "mem_percent": 72, "error_rate": 0.002, "p99_latency_ms": 380, "request_rate_rps": 44, "restarts": 0},
+    {"timestamp": "2024-11-15T03:21:00Z", "cpu_percent": 62, "mem_percent": 83, "error_rate": 0.004, "p99_latency_ms": 420, "request_rate_rps": 43, "restarts": 0},
+    {"timestamp": "2024-11-15T03:24:00Z", "cpu_percent": 12, "mem_percent": 18, "error_rate": 0.95, "p99_latency_ms": 15000, "request_rate_rps": 2, "restarts": 1},
+    {"timestamp": "2024-11-15T03:27:00Z", "cpu_percent": 59, "mem_percent": 81, "error_rate": 0.12, "p99_latency_ms": 890, "request_rate_rps": 30, "restarts": 1},
+    {"timestamp": "2024-11-15T03:30:00Z", "cpu_percent": 8, "mem_percent": 15, "error_rate": 0.97, "p99_latency_ms": 15000, "request_rate_rps": 1, "restarts": 2},
+    {"timestamp": "2024-11-15T03:33:00Z", "cpu_percent": 54, "mem_percent": 78, "error_rate": 0.08, "p99_latency_ms": 760, "request_rate_rps": 28, "restarts": 2}
+  ]
+}

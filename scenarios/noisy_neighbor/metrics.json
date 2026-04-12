@@ -1,0 +1,14 @@
+{
+  "service": "order-service",
+  "window_start": "2024-11-18T22:00:00Z",
+  "window_end": "2024-11-18T22:20:00Z",
+  "samples": [
+    {"timestamp": "2024-11-18T22:00:00Z", "cpu_percent": 28, "mem_percent": 51, "error_rate": 0.002, "p99_latency_ms": 210, "request_rate_rps": 95, "restarts": 0},
+    {"timestamp": "2024-11-18T22:04:00Z", "cpu_percent": 30, "mem_percent": 52, "error_rate": 0.003, "p99_latency_ms": 240, "request_rate_rps": 94, "restarts": 0},
+    {"timestamp": "2024-11-18T22:08:00Z", "cpu_percent": 32, "mem_percent": 53, "error_rate": 0.015, "p99_latency_ms": 1840, "request_rate_rps": 88, "restarts": 0},
+    {"timestamp": "2024-11-18T22:10:00Z", "cpu_percent": 35, "mem_percent": 54, "error_rate": 0.28, "p99_latency_ms": 4200, "request_rate_rps": 71, "restarts": 0},
+    {"timestamp": "2024-11-18T22:12:00Z", "cpu_percent": 38, "mem_percent": 56, "error_rate": 0.61, "p99_latency_ms": 6800, "request_rate_rps": 42, "restarts": 0},
+    {"timestamp": "2024-11-18T22:14:00Z", "cpu_percent": 36, "mem_percent": 55, "error_rate": 0.58, "p99_latency_ms": 6200, "request_rate_rps": 45, "restarts": 0},
+    {"timestamp": "2024-11-18T22:18:00Z", "cpu_percent": 31, "mem_percent": 53, "error_rate": 0.21, "p99_latency_ms": 2800, "request_rate_rps": 68, "restarts": 0}
+  ]
+}

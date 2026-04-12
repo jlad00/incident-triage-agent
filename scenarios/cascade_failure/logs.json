@@ -1,0 +1,82 @@
+[
+  {
+    "timestamp": "2024-11-16T14:05:12Z",
+    "service": "auth-service",
+    "level": "WARN",
+    "message": "Database response slow: 1850ms (threshold: 500ms). Possible connection issue.",
+    "host": "pod-auth-3b1c",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-16T14:05:44Z",
+    "service": "auth-service",
+    "level": "ERROR",
+    "message": "Connection refused: auth-db-primary:5432. Retrying in 5s.",
+    "host": "pod-auth-3b1c",
+    "trace_id": "trace-9911ab"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:01Z",
+    "service": "auth-service",
+    "level": "ERROR",
+    "message": "Token validation failed: database unavailable. Returning 503.",
+    "host": "pod-auth-3b1c",
+    "trace_id": "trace-9911ab"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:05Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Upstream auth-service returned HTTP 503. Cannot validate request token.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-9911ab"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:05Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Upstream auth-service returned HTTP 503. Cannot validate request token.",
+    "host": "pod-gateway-8f4d",
+    "trace_id": "trace-1122bc"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:08Z",
+    "service": "user-service",
+    "level": "ERROR",
+    "message": "Auth token validation timed out after 5000ms. Request rejected.",
+    "host": "pod-user-5d2e",
+    "trace_id": "trace-3344de"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:10Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Max retries exceeded for auth-service. Returning 503 to client.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-9911ab"
+  },
+  {
+    "timestamp": "2024-11-16T14:06:30Z",
+    "service": "auth-service",
+    "level": "CRITICAL",
+    "message": "Circuit breaker OPEN: auth-db-primary. All auth requests will fail until DB recovers.",
+    "host": "pod-auth-3b1c",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-16T14:07:00Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "Authorization check failed: auth-service unavailable. Blocking payment processing.",
+    "host": "pod-payment-7d9f",
+    "trace_id": "trace-5566ef"
+  },
+  {
+    "timestamp": "2024-11-16T14:07:15Z",
+    "service": "api-gateway",
+    "level": "WARN",
+    "message": "High error rate detected on route /api/v1/*: 89% over last 60s",
+    "host": "pod-gateway-2c8a",
+    "trace_id": null
+  }
+]

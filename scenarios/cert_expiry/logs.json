@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "2024-11-17T08:01:15Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "TLS handshake failed: certificate expired for upstream payment-processor.internal. x509: certificate has expired or is not yet valid.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-7788gh"
+  },
+  {
+    "timestamp": "2024-11-17T08:01:15Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "TLS handshake failed: certificate expired for upstream payment-processor.internal. x509: certificate has expired or is not yet valid.",
+    "host": "pod-gateway-8f4d",
+    "trace_id": "trace-8899ij"
+  },
+  {
+    "timestamp": "2024-11-17T08:01:18Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "SSL error connecting to payment-processor.internal:443: certificate verify failed",
+    "host": "pod-payment-7d9f",
+    "trace_id": "trace-7788gh"
+  },
+  {
+    "timestamp": "2024-11-17T08:01:22Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Max retries exceeded for payment-processor.internal. Returning 503 to client.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-7788gh"
+  },
+  {
+    "timestamp": "2024-11-17T08:02:00Z",
+    "service": "notification-service",
+    "level": "ERROR",
+    "message": "401 Unauthorized: JWT validation failed. Auth service returned invalid token error.",
+    "host": "pod-notify-1a2b",
+    "trace_id": "trace-0011kl"
+  },
+  {
+    "timestamp": "2024-11-17T08:02:10Z",
+    "service": "api-gateway",
+    "level": "WARN",
+    "message": "High error rate detected on route /api/v1/payments: 100% over last 60s",
+    "host": "pod-gateway-2c8a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-17T08:03:00Z",
+    "service": "payment-service",
+    "level": "ERROR",
+    "message": "TLS handshake failed: certificate expired for vault.internal. Certificate expiry: 2024-11-17T00:00:00Z",
+    "host": "pod-payment-7d9f",
+    "trace_id": null
+  }
+]

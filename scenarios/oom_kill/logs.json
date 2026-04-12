@@ -1,0 +1,82 @@
+[
+  {
+    "timestamp": "2024-11-15T03:22:11Z",
+    "service": "ml-inference",
+    "level": "WARN",
+    "message": "Memory usage at 82%. Approaching container limit of 4Gi.",
+    "host": "pod-ml-inference-9f2a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:23:45Z",
+    "service": "ml-inference",
+    "level": "WARN",
+    "message": "Memory usage at 91%. GC pressure increasing.",
+    "host": "pod-ml-inference-9f2a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:24:10Z",
+    "service": "ml-inference",
+    "level": "ERROR",
+    "message": "Out of memory: Kill process 18842 (python) score 998 or sacrifice child",
+    "host": "node-worker-04",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:24:11Z",
+    "service": "ml-inference",
+    "level": "CRITICAL",
+    "message": "OOM kill detected. Container ml-inference-9f2a terminated. Memory limit exceeded: 4Gi",
+    "host": "node-worker-04",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:24:15Z",
+    "service": "ml-inference",
+    "level": "INFO",
+    "message": "Container restarting. Restart count: 1",
+    "host": "pod-ml-inference-9f2a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:24:45Z",
+    "service": "api-gateway",
+    "level": "ERROR",
+    "message": "Upstream ml-inference returned HTTP 503. Service unavailable.",
+    "host": "pod-gateway-2c8a",
+    "trace_id": "trace-4421aa"
+  },
+  {
+    "timestamp": "2024-11-15T03:26:30Z",
+    "service": "ml-inference",
+    "level": "WARN",
+    "message": "Memory usage at 88%. Same pattern as before restart.",
+    "host": "pod-ml-inference-9f2a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:27:55Z",
+    "service": "ml-inference",
+    "level": "CRITICAL",
+    "message": "OOM kill detected. Container ml-inference-9f2a terminated. Memory limit exceeded: 4Gi",
+    "host": "node-worker-04",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:28:00Z",
+    "service": "ml-inference",
+    "level": "INFO",
+    "message": "Container restarting. Restart count: 2",
+    "host": "pod-ml-inference-9f2a",
+    "trace_id": null
+  },
+  {
+    "timestamp": "2024-11-15T03:28:30Z",
+    "service": "api-gateway",
+    "level": "WARN",
+    "message": "High error rate detected on route /api/v1/inference: 94% over last 60s",
+    "host": "pod-gateway-2c8a",
+    "trace_id": null
+  }
+]
