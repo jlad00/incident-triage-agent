@@ -9,7 +9,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 
@@ -53,9 +52,6 @@ logging.basicConfig(
 def triage(
     scenario_dir: Path = typer.Argument(
         ..., help="Path to scenario directory containing logs.json, metrics.json, changes.json"
-    ),
-    output_json: bool = typer.Option(
-        False, "--json", help="Output evidence packet as raw JSON (skips LLM)"
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show debug logging"
@@ -165,11 +161,6 @@ def triage(
         runbook_context=results.get("runbook"),
     )
     results["packet"] = packet
-
-    # ── JSON mode — print packet and exit (no LLM) ────────────────────────────
-    if output_json:
-        print(json.dumps(packet.model_dump(mode="json"), indent=2, default=str))
-        return
 
     # ── No-LLM mode ───────────────────────────────────────────────────────────
     if no_llm:
