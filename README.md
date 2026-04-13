@@ -115,7 +115,7 @@ incident-triage-agent/
 │   ├── cascade_failure/
 │   ├── cert_expiry/
 │   └── noisy_neighbor/
-├── tests/                  # Unit tests (76 passing)
+├── tests/                  # Unit tests
 └── scripts/                # Demo runner
 ```
 
@@ -147,7 +147,7 @@ This separation means:
 # Health check
 GET /health
 
-# Triage a named scenario (great for demos)
+# Triage a named scenario
 POST /api/v1/triage/scenario/{scenario_name}?skip_llm=false
 
 # Triage a custom incident bundle
@@ -259,7 +259,7 @@ This project demonstrates applying AI directly to that domain:
 - **Operations automation** — CLI + REST API, runbook integration, structured report generation
 - **AI-assisted workflows** — hybrid deterministic + LLM pipeline, evidence-cited output, graceful LLM degradation
 
-The design philosophy throughout: use deterministic logic for everything that can be computed, and reserve the LLM for synthesis and reasoning where human-like judgment adds genuine value.
+The design philosophy throughout: use deterministic logic for everything that can be computed, and reserve the LLM for synthesis and reasoning where human-like judgment and language adds value.
 
 ---
 
@@ -268,13 +268,14 @@ The design philosophy throughout: use deterministic logic for everything that ca
 **Current limitations:**
 
 - Single-service metrics per incident bundle (multi-service metric correlation is a planned extension)
-- Local model output quality varies — Anthropic Claude produces more precise evidence citations
+- Local model output quality varies — I guess to be expected, Claude produces more precise evidence citations
 - No persistent incident history — each run is stateless
 
 **Planned extensions:**
 
 - Streamlit UI for visual demo without the CLI
 - Prometheus remote write adapter
+- Graylog adapter
 - PagerDuty webhook integration
 - Incident history with PostgreSQL backend
 - Multi-service metric correlation across a single incident window
