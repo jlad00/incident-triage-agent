@@ -67,7 +67,7 @@ bash scripts/run_demo.sh
 
 ```bash
 # Clone and set up
-git clone https://github.com/yourusername/incident-triage-agent
+git clone https://github.com/jlad00/incident-triage-agent
 cd incident-triage-agent
 python -m venv .venv
 
