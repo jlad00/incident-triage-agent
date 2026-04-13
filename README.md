@@ -251,7 +251,7 @@ pytest tests/ -v --cov=agent --cov-report=term-missing
 
 My background is in hybrid infrastructure, systems engineering, and platform-adjacent work — Windows, Linux, VMware, Active Directory, Entra ID, Azure, Prometheus, Grafana, Graylog, Jenkins, Terraform, Ansible.
 
-This project demonstrates applying AI directly to that domain:
+This project is an attempt to demonstrate applying LLMs and AI directly to that domain:
 
 - **Platform engineering** — modular ingestion adapters, externalized rule configuration, Docker Compose local dev
 - **Incident response** — realistic scenario library based on common production failure modes
